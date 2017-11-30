@@ -34,12 +34,8 @@ import java.util.Date;
  * @see #print(Object, int)
  * @see #print(String, Object, int)
  * @see #println(Object, int)
- * @see #println(String, Object, int) (Object, int)
- * @see #displayTitle()
+ * @see #println(String, Object, int)
  * @see #printTitle(String, int)
- * @see #stack(char)
- * @see #stack(char, String)
- * @see #unstack()
  * @see #indent(String)
  * @see #now()
  * @since 0.2.0
@@ -170,10 +166,6 @@ public final class Logger {
         return multiline.replaceAll("(?m)(\r?\n)", "$1\t");
     }
 
-    private static String dateBlock() {
-        return "\033[0;37m[" + now() + "]\033[0m";
-    }
-
     private static String getSeverityString(int severity) {
         switch (severity) {
             case DEBUG:
@@ -196,19 +188,11 @@ public final class Logger {
         return METHOD_PREFIX + " \033[1;4m" + title + "\033[0m " + METHOD_SUFFIX;
     }
 
-    private static String concatAll(Object o) {
-        return concatAll(o.toString());
+    private static String concatAll(Object obj) {
+        return "\033[0;37m[" + now() + "]\033[0m" + severity + obj.toString();
     }
 
-    private static String concatAll(String str) {
-        return dateBlock() + severity + str;
-    }
-
-    private static String concatAll(String name, Object o) {
-        return concatAll(name, o.toString());
-    }
-
-    private static String concatAll(String name, String value) {
-        return concatAll(("\033[1m") + name + "\033[0m" + VARNAME_SEPARATOR + value);
+    private static String concatAll(String name, Object value) {
+        return concatAll(("\033[1m") + name + "\033[0m" + VARNAME_SEPARATOR + value.toString());
     }
 }

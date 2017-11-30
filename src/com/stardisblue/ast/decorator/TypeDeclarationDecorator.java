@@ -8,33 +8,31 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Decorating a Type (class)
+ */
 public class TypeDeclarationDecorator {
+    private final CompilationUnit parent;
+    private final TypeDeclaration node;
+    private final List<FieldDeclarationDecorator> fieldDeclarationDecorators;
+    private final List<MethodDeclarationDecorator> methodDeclarationDecorators;
+
     private String name;
     private String packageName;
     private String fullName;
     private int numberOfLines;
 
-    private TypeDeclaration node;
-    private List<FieldDecorator> fieldDecorators = new ArrayList<>();
-    private List<MethodDeclarationDecorator> methodDeclarationDecorators = new ArrayList<>();
-    private CompilationUnit parent;
-
-    public TypeDeclarationDecorator(TypeDeclaration node,
-                                    List<FieldDecorator> fieldDecorators,
-                                    List<MethodDeclarationDecorator> methodDeclarationDecorators) {
+    public TypeDeclarationDecorator(CompilationUnit parent, TypeDeclaration node, int fieldsSize, int methodsSize) {
         // HAHA! saved it
         this.node = node;
         this.name = node.getName().toString();
-        this.fieldDecorators = fieldDecorators;
-        this.methodDeclarationDecorators = methodDeclarationDecorators;
+        this.fieldDeclarationDecorators = new ArrayList<>(fieldsSize);
+        this.methodDeclarationDecorators = new ArrayList<>(methodsSize);
+        this.parent = parent;
 
-    }
-
-    public void inject(CompilationUnit cu) {
         // Getting package name
-        this.parent = cu;
-        if (cu.getPackage() != null) {
-            this.packageName = cu.getPackage().getName().toString();
+        if (this.parent.getPackage() != null) {
+            this.packageName = this.parent.getPackage().getName().toString();
             this.fullName = getPackageName() + "." + getName();
         } else {
             this.packageName = "";
@@ -42,27 +40,28 @@ public class TypeDeclarationDecorator {
         }
 
         // counting line numbers
-        int startLine = cu.getLineNumber(node.getStartPosition());
+        int startLine = this.parent.getLineNumber(node.getStartPosition());
         // -1 for lenght correction
-        int endLine = cu.getLineNumber(node.getStartPosition() + node.getLength() - 1);
+        int endLine = this.parent.getLineNumber(node.getStartPosition() + node.getLength() - 1);
         this.numberOfLines = endLine - startLine;
 
         // welp printing com.stardisblue.ast.logging
-        Logger.printTitle(getFullName() + ": " + fieldDecorators.size() + " fields, " + methodDeclarationDecorators
-                .size() + " methods, " + numberOfLines() + " lines", Logger.DEBUG);
+        Logger.printTitle(getFullName() + ": " + fieldsSize + " fields," +
+                                  " " + methodsSize + " methods," +
+                                  " " + numberOfLines() + " lines",
+                          Logger.DEBUG);
+    }
 
-        Logger.println("Fields", "", Logger.DEBUG);
-        for (FieldDecorator fieldDecorator : fieldDecorators) {
-            fieldDecorator.inject(this);
-
-            Logger.println("└─ " + fieldDecorator.getType() + " : " + fieldDecorator.getFragments(), Logger.DEBUG);
-        }
-
-
-        Logger.println("Methods", "", Logger.DEBUG);
-        for (MethodDeclarationDecorator methodDeclarationDecorator : methodDeclarationDecorators) {
-            methodDeclarationDecorator.inject(this);
-        }
+    /**
+     * Need to be called once, used to resolve cyclic dependency injection
+     *
+     * @param fieldDeclarationDecorators  array of fields
+     * @param methodDeclarationDecorators array of methods
+     */
+    public void setup(List<FieldDeclarationDecorator> fieldDeclarationDecorators,
+                      List<MethodDeclarationDecorator> methodDeclarationDecorators) {
+        this.fieldDeclarationDecorators.addAll(fieldDeclarationDecorators);
+        this.methodDeclarationDecorators.addAll(methodDeclarationDecorators);
     }
 
     public int numberOfMethods() {
@@ -70,7 +69,7 @@ public class TypeDeclarationDecorator {
     }
 
     public int numberOfFields() {
-        return fieldDecorators.size();
+        return fieldDeclarationDecorators.size();
     }
 
     public String getPackageName() {

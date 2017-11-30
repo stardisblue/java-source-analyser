@@ -9,34 +9,58 @@ import java.util.ArrayList;
 
 public class TypeDeclarationVisitor extends ASTVisitor {
 
-    private ArrayList<TypeDeclarationDecorator> types = new ArrayList<>();
+    private ArrayList<TypeDeclarationDecorator> decorators = new ArrayList<>();
+    private ArrayList<TypeDeclarationWrapper> wrappers = new ArrayList<>();
 
     @Override
     public boolean visit(TypeDeclaration node) {
-        MethodDeclarationVisitor methodDeclarationVisitor = new MethodDeclarationVisitor();
-        node.accept(methodDeclarationVisitor);
-        FieldVisitor fieldVisitor = new FieldVisitor();
-        node.accept(fieldVisitor);
+        TypeDeclarationWrapper w = new TypeDeclarationWrapper();
+        w.node = node;
 
-        TypeDeclarationDecorator typeDeclarationDecorator = new
-                TypeDeclarationDecorator(node, fieldVisitor.decorators(), methodDeclarationVisitor.decorators());
+        node.accept(w.methodDeclarationVisitor);
+        node.accept(w.fieldDeclarationVisitor);
 
-        types.add(typeDeclarationDecorator);
-
+        wrappers.add(w);
 
         return super.visit(node);
     }
 
-    @Override
-    public void endVisit(CompilationUnit node) {
-        for (TypeDeclarationDecorator type : types) {
-            type.inject(node);
+    /**
+     * Used to create the decorators and resolve dependencies
+     *
+     * @param parent parent element
+     * @return an array of decorators decorating all the elements found while visiting
+     */
+    public ArrayList<TypeDeclarationDecorator> decorators(CompilationUnit parent) {
+        // if the decorators are already set
+        if (!decorators.isEmpty()) return decorators;
+
+        decorators = new ArrayList<>(wrappers.size());
+
+        for (TypeDeclarationWrapper w : wrappers) {
+            // - creating decorator
+            TypeDeclarationDecorator type = new TypeDeclarationDecorator(parent, w.node,
+                                                                         w.fieldDeclarationVisitor.size(),
+                                                                         w.methodDeclarationVisitor.size());
+            // - resolving cyclic dependency injection
+            type.setup(w.fieldDeclarationVisitor.decorators(type), w.methodDeclarationVisitor.decorators(type));
+
+            // - adding to the list of decorators
+            decorators.add(type);
         }
 
-        super.endVisit(node);
+        // emptying once the decorators are created
+        wrappers = null;
+
+        return decorators;
     }
 
-    public ArrayList<TypeDeclarationDecorator> decorators() {
-        return types;
+    /**
+     * Used for saving structures while visiting
+     */
+    private class TypeDeclarationWrapper {
+        TypeDeclaration node;
+        FieldDeclarationVisitor fieldDeclarationVisitor = new FieldDeclarationVisitor();
+        MethodDeclarationVisitor methodDeclarationVisitor = new MethodDeclarationVisitor();
     }
 }

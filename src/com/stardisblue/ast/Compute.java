@@ -11,6 +11,14 @@ import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
 public class Compute {
+    /**
+     * Get all the existing packages of the array of packages.
+     * <p>
+     * Note that the list of {@link TypeDeclarationDecorator} needs to be in a sorted order (eg: a.A, a.b.I, a.c.O, a.c.J)
+     *
+     * @param typeDeclarationDecorators array of objects decorating a {@link TypeDeclarationDecorator}
+     * @return the list of packages
+     */
     public static List<String> packages(ArrayList<TypeDeclarationDecorator> typeDeclarationDecorators) {
         String lastPackageName = "";
         ArrayList<String> packages = new ArrayList<>();
@@ -185,52 +193,69 @@ public class Compute {
         return extracted;
     }
 
+    /**
+     * Generates a an object representing the method call graph
+     *
+     * @param methods list of method decorators
+     * @return an object representing a method call graph
+     */
     public static Graph methodGraph(List<MethodDeclarationDecorator> methods) {
         Graph graph = new Graph();
+
         for (MethodDeclarationDecorator caller : methods) {
+            // there are people who call
             String callerString = caller.getShortWithParamTypes();
 
             int callerId;
-            if (graph.has(callerString)) {
-                callerId = graph.get(callerString);
-                graph.belongs(callerId, true);
-            } else {
-                callerId = graph.nextId();
-                graph.belongs(true);
-                graph.beginCount(0);
-                graph.save(callerString, callerId);
+            if (graph.has(callerString)) {// we have her in our phonebook
+                callerId = graph.get(callerString);// we get her number
+                graph.belongs(callerId, true); // she belongs to us because she's the caller
+            } else {// she does not exist in our phonebook
+                callerId = graph.nextId();// so we give her a number
+                graph.belongs(true);// she belongs to us because she's the caller
+                graph.beginCount(0); // we can begin to count the number of callees she has
+                graph.save(callerString, callerId); // we add her to our phonebook
             }
 
-            HashSet<Integer> callees = new HashSet<>();
+            HashSet<Integer> callees = new HashSet<>();// list of called people
 
             for (MethodInvocationDecorator callee : caller.getMethodCalls()) {
+                // the ones who are called
                 String calleeString = callee.getShortWithParamTypes();
 
                 int calleeId;
-                if (graph.has(calleeString)) {
-                    calleeId = graph.get(calleeString);
-                    graph.incrementCount(calleeId);
-                } else {
-                    calleeId = graph.nextId();
-                    graph.belongs(false);
-                    graph.beginCount(1);
-                    graph.save(calleeString, calleeId);
+                if (graph.has(calleeString)) { // we have him in our phonebook
+                    calleeId = graph.get(calleeString); // so we get the phone number
+                    graph.incrementCount(calleeId); // the called is being called once more
+                } else {// we do not have him in our phonebook
+                    calleeId = graph.nextId(); // so we get him a number
+                    graph.belongs(false); // he does not belong to us
+                    graph.beginCount(1); // he was at least called by the caller
+                    graph.save(calleeString, calleeId); // we save this guy's number
                 }
 
-                callees.add(calleeId);
+                callees.add(calleeId); // we add this person to the list of called people
             }
 
-            graph.link(callerId, callees);
+            graph.link(callerId, callees);// we her and the people she called together
         }
 
-        return graph;
+        return graph; // end of it :)
     }
 
+    /**
+     * Returns a list of json objects representing nodes
+     *
+     * @param nodeIds          the ids of the methods
+     * @param belongsToProject if the node belongs to the repository
+     * @return
+     */
     public static ArrayList<String> graphNodes(HashMap<String, Integer> nodeIds,
                                                ArrayList<Boolean> belongsToProject) {
-        ArrayList<String> nodes = new ArrayList<>();
+        ArrayList<String> nodes = new ArrayList<>(nodeIds.size());
 
         for (Map.Entry<String, Integer> nodeEntry : nodeIds.entrySet()) {
+            // the json has an id, a name and if he belongs to the project
             nodes.add("{\"id\":" + nodeEntry.getValue() + ", " +
                               "\"name\": \"" + nodeEntry.getKey() + "\", " +
                               "\"own\": " + (belongsToProject.get(nodeEntry.getValue()) ? "true" : "false") + "}");
@@ -238,6 +263,13 @@ public class Compute {
         return nodes;
     }
 
+    /**
+     * Returns an array representing all the links as json objects
+     *
+     * @param linkIds      optimized hashmap representing all the links
+     * @param countParents number of source nodes for a given targetNodeId
+     * @return an array containing a links represented as json object
+     */
     public static List<String> graphLinks(HashMap<Integer, HashSet<Integer>> linkIds,
                                           ArrayList<Integer> countParents) {
         ArrayList<String> links = new ArrayList<>();
@@ -247,6 +279,7 @@ public class Compute {
 
             for (int calleeId : linkEntry.getValue()) {
                 int parentCount = countParents.get(calleeId);
+                // the more the callee was called, the less he weights
                 float weight = (float) (1 / (0.5 * parentCount + 0.5));
 
                 links.add("{\"source\":" + callerId + ", " +

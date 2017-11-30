@@ -10,7 +10,7 @@ public class Display {
      * Displays the title
      */
     public static void title(String title) {
-        display("# " + title);
+        markdown("# " + title);
     }
 
     /**
@@ -19,9 +19,9 @@ public class Display {
      * @param title   title of the content
      * @param content content
      */
-    public static void display(String title, String content) {
-        displayTitle2(title);
-        display(content);
+    public static void markdown(String title, String content) {
+        markdownTitle2(title);
+        markdown(content);
     }
 
     /**
@@ -29,15 +29,15 @@ public class Display {
      *
      * @param content string to display
      */
-    public static void display(String content) {
+    public static void markdown(String content) {
         System.out.println(content);
         System.out.println();
     }
 
-    public static <T> void display(String name, List<T> array, Function<T, String> display) {
-        displayTitle2(name);
-        displayCount(name, array.size());
-        displayList(array, display);
+    public static <T> void markdown(String name, List<T> array, Function<T, String> display) {
+        markdownTitle2(name);
+        markdownCount(name, array.size());
+        markdownList(array, display);
     }
 
 
@@ -55,22 +55,22 @@ public class Display {
     public static <T> void withMost(String type, String filter, List<T> filtered,
                                     int originalSize, int percent,
                                     Function<T, String> display) {
-        displayTitle2(percent + "% (" + filtered.size() + "/" + originalSize +
-                              ") of " + type + " With Most " + filter);
-        displayCount(type, filtered.size());
-        displayList(filtered, display);
+        markdownTitle2(percent + "% (" + filtered.size() + "/" + originalSize +
+                               ") of " + type + " With Most " + filter);
+        markdownCount(type, filtered.size());
+        markdownList(filtered, display);
     }
 
 
-    private static void displayTitle2(String title) {
-        display("## " + title);
+    private static void markdownTitle2(String title) {
+        markdown("## " + title);
     }
 
-    private static void displayCount(String name, int count) {
-        display("> Number of " + name.toLowerCase() + " : " + count);
+    private static void markdownCount(String name, int count) {
+        markdown("> Number of " + name.toLowerCase() + " : " + count);
     }
 
-    private static <T> void displayList(List<T> array, Function<T, String> display) {
+    private static <T> void markdownList(List<T> array, Function<T, String> display) {
         for (T item : array) {
             System.out.println("- " + display.apply(item));
         }
@@ -79,7 +79,7 @@ public class Display {
     }
 
     public static void json(ArrayList<String> nodes, List<String> links) {
-        displayTitle2("Json Graph");
+        markdownTitle2("Json Graph");
         System.out.println("{\"nodes\":[" + String.join(",", nodes) + "], " +
                                    "\"links\":[" + String.join(",", links) + "]}");
     }

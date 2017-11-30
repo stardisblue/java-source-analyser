@@ -2,48 +2,69 @@ package com.stardisblue.ast.decorator;
 
 
 import com.stardisblue.logging.Logger;
-import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class MethodDeclarationDecorator extends ASTVisitor {
+/**
+ * Decorating MethodDeclaration
+ */
+public class MethodDeclarationDecorator {
 
+    private final TypeDeclarationDecorator parent;
     private final MethodDeclaration node;
-    private final String name;
     private final List<ParameterDecorator> parameters;
     private final List<MethodInvocationDecorator> methodInvocations;
+
+    private final String name;
     private String fullName;
-    private TypeDeclarationDecorator parent;
     private int numberOfLines;
     private String strParameters;
 
-    public MethodDeclarationDecorator(MethodDeclaration node, List<ParameterDecorator> parameters,
-                                      List<MethodInvocationDecorator> methodInvocations) {
+    /**
+     * Default constructer, elements are passed through via DI,
+     * the arrays are preallocated using size parameters
+     *
+     * @param parent                parent element
+     * @param node                  decorated element
+     * @param parametersSize        number of parameters
+     * @param methodInvocationsSize number of methodInvocations
+     */
+    public MethodDeclarationDecorator(TypeDeclarationDecorator parent, MethodDeclaration node,
+                                      int parametersSize, int methodInvocationsSize) {
         // DI
         this.node = node;
         this.name = node.getName().toString();
-        this.parameters = parameters;
-        this.methodInvocations = methodInvocations;
-    }
+        this.parameters = new ArrayList<>(parametersSize);
+        this.methodInvocations = new ArrayList<>(methodInvocationsSize);
+        this.parent = parent;
 
-    public void inject(TypeDeclarationDecorator node) {
-        this.parent = node;
         CompilationUnit cu = this.parent.getParent();
         // counting line numbers
         int startLine = cu.getLineNumber(this.node.getStartPosition());
         // -1 for lenght correction
         int endLine = cu.getLineNumber(this.node.getStartPosition() + this.node.getLength() - 1);
+
         this.numberOfLines = endLine - startLine;
 
-        Logger.println("└─ " + this.getShortWithParamTypes() + ": " + this.numberOfParameters() + " parameters, "
+        Logger.println("└─ " + this.getShortWithParamTypes() + ": " + parametersSize + " parameters, "
                                + this.numberOfLines() + " lines",
                        Logger.DEBUG);
-        for (MethodInvocationDecorator methodInvocation : this.methodInvocations) {
-            methodInvocation.inject(this);
-        }
     }
+
+    /**
+     * Need to be called once, used to resolve cyclic dependency injection
+     *
+     * @param parameters        the array of parameters
+     * @param methodInvocations the array of method invocations
+     */
+    public void setup(List<ParameterDecorator> parameters, List<MethodInvocationDecorator> methodInvocations) {
+        this.parameters.addAll(parameters);
+        this.methodInvocations.addAll(methodInvocations);
+    }
+
 
     public int numberOfLines() {
         return numberOfLines;

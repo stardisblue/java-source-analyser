@@ -2,10 +2,13 @@ package com.stardisblue.ast.decorator;
 
 import org.eclipse.jdt.core.dom.SimpleType;
 
-public class ParameterTypeDecorator {
+/**
+ * Decorating a parameter type
+ */
+public class ParameterizedTypeDecorator {
     private final SimpleType node;
 
-    public ParameterTypeDecorator(SimpleType node) {
+    public ParameterizedTypeDecorator(SimpleType node) {
         this.node = node;
     }
 

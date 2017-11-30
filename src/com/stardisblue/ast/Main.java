@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class Main {
-    public static String projectSourcePath = "C:\\Users\\stardisblue\\Documents\\M2_AIGLE\\HMIN306-Evolution_Restructuration\\TP2-Analyzer\\src";
+    public static String projectSourcePath = "C:\\Users\\stardisblue\\Documents\\M2_AIGLE\\HMIN306-Evolution_Restructuration\\TP2-Source-Analyser\\src";
     public static String jrePath = System.getProperty("java.home") + "\\lib\\rt.jar";
 
     public static void main(String[] args) {
@@ -36,7 +36,7 @@ public class Main {
                 TypeDeclarationVisitor typeDeclarationVisitor = new TypeDeclarationVisitor();
                 compilationUnit.accept(typeDeclarationVisitor);
 
-                typeDecs.addAll(typeDeclarationVisitor.decorators());
+                typeDecs.addAll(typeDeclarationVisitor.decorators(compilationUnit));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -48,7 +48,7 @@ public class Main {
 
         // Packages
         List<String> packages = Compute.packages(typeDecs);
-        Display.display("Package(s)", packages, String::toString);
+        Display.markdown("Package(s)", packages, String::toString);
 
         // Most methods
         int percentageMethods = 20;
@@ -90,7 +90,7 @@ public class Main {
         List<TypeDeclarationDecorator> filteredByMethodNumber =
                 Compute.hasMoreThan(typeDecs, minimalValue, TypeDeclarationDecorator::numberOfMethods);
         // - display
-        Display.display("Class(es) with More than " + minimalValue + " Method(s)", filteredByMethodNumber,
+        Display.markdown("Class(es) with More than " + minimalValue + " Method(s)", filteredByMethodNumber,
                         t -> t.getFullName() + " : " + t.numberOfMethods() + " method(s)");
 
 
@@ -115,8 +115,8 @@ public class Main {
                 Compute.getSameAs(methods, maxParamMethod,
                                   (m1, m2) -> m1.numberOfParameters() == m2.numberOfParameters());
         // - display
-        Display.display("Method(s) With The Highest Number of Parameter(s)", maxParamMethods,
-                        (t) -> t.getFullName() + " : " + t.numberOfParameters() + " parameters");
+        Display.markdown("Method(s) With The Highest Number of Parameter(s)", maxParamMethods,
+                         (t) -> t.getFullName() + " : " + t.numberOfParameters() + " parameters");
 
         // Method Call Graph
         // - creation of the graph

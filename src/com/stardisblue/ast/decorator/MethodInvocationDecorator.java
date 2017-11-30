@@ -7,9 +7,11 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 
 import java.util.ArrayList;
 
+/**
+ * Decorating MethodInvocation
+ */
 public class MethodInvocationDecorator {
-
-
+    private final MethodDeclarationDecorator parent;
     private final MethodInvocation node;
     private final String name;
     private final String type;
@@ -17,10 +19,18 @@ public class MethodInvocationDecorator {
     private final String classType;
     private final boolean binded;
     private final ArrayList<String> parameters = new ArrayList<>();
-    private MethodDeclarationDecorator parent;
 
-    public MethodInvocationDecorator(MethodInvocation node) {
+    /**
+     * Default constructer, elements are passed through via DI,
+     *
+     * @param parent parent element
+     * @param node   decorated element
+     */
+    public MethodInvocationDecorator(MethodDeclarationDecorator parent,
+                                     MethodInvocation node) {
+        this.parent = parent;
         this.node = node;
+
         IMethodBinding binding = node.resolveMethodBinding();
 
         if (binding != null) {
@@ -37,6 +47,9 @@ public class MethodInvocationDecorator {
             this.type = binding.getDeclaringClass().getName();
             this.packageName = binding.getDeclaringClass().getPackage().getName();
             this.classType = binding.getDeclaringClass().getTypeDeclaration().getName();
+
+            Logger.println("  └─ " + this.getShortWithParamTypes(), Logger.DEBUG);
+
         } else {
             this.binded = false;
             this.name = "";
@@ -44,11 +57,6 @@ public class MethodInvocationDecorator {
             this.packageName = "";
             this.classType = "";
         }
-    }
-
-    public void inject(MethodDeclarationDecorator node) {
-        this.parent = node;
-        Logger.println("  └─ " + this.getFullName(), Logger.DEBUG);
     }
 
     public boolean isBinded() {
@@ -84,6 +92,6 @@ public class MethodInvocationDecorator {
     }
 
     public String getShortWithParamTypes() {
-        return getShortName()+ "(" + String.join(", ", parameters) + ")";
+        return getShortName() + "(" + String.join(", ", parameters) + ")";
     }
 }
