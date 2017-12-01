@@ -1,10 +1,12 @@
 package com.stardisblue.ast.visitor;
 
-import com.stardisblue.ast.decorator.MethodDeclarationDecorator;
-import com.stardisblue.ast.decorator.TypeDeclarationDecorator;
+import com.stardisblue.ast.info.MethodDeclarationInfo;
+import com.stardisblue.ast.info.TypeDeclarationInfo;
 import com.stardisblue.logging.Logger;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,29 +14,33 @@ import java.util.List;
 public class MethodDeclarationVisitor extends ASTVisitor {
 
     private List<MethodDeclarationWrapper> wrappers = new ArrayList<>();
-    private List<MethodDeclarationDecorator> decorators = new ArrayList<>();
+    private List<MethodDeclarationInfo> decorators = new ArrayList<>();
 
     @Override
     public boolean visit(MethodDeclaration node) {
         MethodDeclarationWrapper w = new MethodDeclarationWrapper();
         w.node = node;
 
-        node.accept(w.parameterVisitor);
-        node.accept(w.invocationVisitor);
+        for (Object obj : node.parameters()) {
+            SingleVariableDeclaration singleVar = (SingleVariableDeclaration) obj;
+            w.parameterVisitor.visit(singleVar);
+        }
+
+        node.accept(w.methodInvocationVisitor);
 
         this.wrappers.add(w);
 
         return super.visit(node);
     }
 
-
     /**
      * Used to create the decorators and resolve dependencies
      *
-     * @param parent parent element
+     * @param compilationUnit used to calculate number of lines
+     * @param parent          parent element
      * @return an array of decorators decorating all the elements found while visiting
      */
-    public List<MethodDeclarationDecorator> decorators(TypeDeclarationDecorator parent) {
+    public List<MethodDeclarationInfo> infos(CompilationUnit compilationUnit, TypeDeclarationInfo parent) {
         // if the decorators are already set
         if (!decorators.isEmpty()) return decorators;
 
@@ -44,16 +50,16 @@ public class MethodDeclarationVisitor extends ASTVisitor {
 
         for (MethodDeclarationWrapper w : wrappers) {
             // - creating decorator
-            MethodDeclarationDecorator method = new MethodDeclarationDecorator(parent, w.node,
-                                                                               w.parameterVisitor.size(),
-                                                                               w.invocationVisitor.size());
+            MethodDeclarationInfo method = new MethodDeclarationInfo(compilationUnit, w.node, parent,
+                                                                     w.parameterVisitor.size(),
+                                                                     w.methodInvocationVisitor.size());
             // - resolving cyclic dependencies
-            method.setup(w.parameterVisitor.decorators(method), w.invocationVisitor.decorators(method));
+            method.setup(w.parameterVisitor.infos(method), w.methodInvocationVisitor.infos(method));
             // - adding to the list of decorators
             decorators.add(method);
         }
 
-        // emptying once the decorator are created
+        // emptying once the info are created
         wrappers = null;
 
         return decorators;
@@ -74,6 +80,6 @@ public class MethodDeclarationVisitor extends ASTVisitor {
     private class MethodDeclarationWrapper {
         MethodDeclaration node;
         ParameterVisitor parameterVisitor = new ParameterVisitor();
-        InvocationVisitor invocationVisitor = new InvocationVisitor();
+        MethodInvocationVisitor methodInvocationVisitor = new MethodInvocationVisitor();
     }
 }

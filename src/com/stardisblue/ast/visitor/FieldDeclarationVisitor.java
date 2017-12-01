@@ -1,7 +1,7 @@
 package com.stardisblue.ast.visitor;
 
-import com.stardisblue.ast.decorator.FieldDeclarationDecorator;
-import com.stardisblue.ast.decorator.TypeDeclarationDecorator;
+import com.stardisblue.ast.info.FieldDeclarationInfo;
+import com.stardisblue.ast.info.TypeDeclarationInfo;
 import com.stardisblue.logging.Logger;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
@@ -11,7 +11,7 @@ import java.util.List;
 
 public class FieldDeclarationVisitor extends ASTVisitor {
     private List<FieldDeclaration> fields = new ArrayList<>();
-    private List<FieldDeclarationDecorator> decorators = new ArrayList<>();
+    private List<FieldDeclarationInfo> decorators = new ArrayList<>();
 
     @Override
     public boolean visit(FieldDeclaration node) {
@@ -26,7 +26,7 @@ public class FieldDeclarationVisitor extends ASTVisitor {
      * @param parent parent element
      * @return an array of decorators decorating all the elements found while visiting
      */
-    public List<FieldDeclarationDecorator> decorators(TypeDeclarationDecorator parent) {
+    public List<FieldDeclarationInfo> infos(TypeDeclarationInfo parent) {
         // if the decorators are already set
         if (!decorators.isEmpty()) return decorators;
 
@@ -35,14 +35,14 @@ public class FieldDeclarationVisitor extends ASTVisitor {
         Logger.println("Fields", "", Logger.DEBUG);
 
         for (FieldDeclaration field : fields) {
-            // - creating decorator
+            // - creating info
             // x cyclic dependencies
             // - adding to the list of decorators
-            decorators.add(new FieldDeclarationDecorator(parent, field));
+            decorators.add(new FieldDeclarationInfo(parent, field));
 
         }
 
-        // emptying once the decorator are created
+        // emptying once the info are created
         fields = null;
 
         return decorators;

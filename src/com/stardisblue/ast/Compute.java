@@ -1,8 +1,8 @@
 package com.stardisblue.ast;
 
-import com.stardisblue.ast.decorator.MethodDeclarationDecorator;
-import com.stardisblue.ast.decorator.MethodInvocationDecorator;
-import com.stardisblue.ast.decorator.TypeDeclarationDecorator;
+import com.stardisblue.ast.info.MethodDeclarationInfo;
+import com.stardisblue.ast.info.MethodInvocationInfo;
+import com.stardisblue.ast.info.TypeDeclarationInfo;
 import com.stardisblue.ast.structure.Graph;
 
 import java.util.*;
@@ -14,16 +14,16 @@ public class Compute {
     /**
      * Get all the existing packages of the array of packages.
      * <p>
-     * Note that the list of {@link TypeDeclarationDecorator} needs to be in a sorted order (eg: a.A, a.b.I, a.c.O, a.c.J)
+     * Note that the list of {@link TypeDeclarationInfo} needs to be in a sorted order (eg: a.A, a.b.I, a.c.O, a.c.J)
      *
-     * @param typeDeclarationDecorators array of objects decorating a {@link TypeDeclarationDecorator}
+     * @param typeDeclarationInfos array of objects decorating a {@link TypeDeclarationInfo}
      * @return the list of packages
      */
-    public static List<String> packages(ArrayList<TypeDeclarationDecorator> typeDeclarationDecorators) {
+    public static List<String> packages(List<TypeDeclarationInfo> typeDeclarationInfos) {
         String lastPackageName = "";
-        ArrayList<String> packages = new ArrayList<>();
-        for (TypeDeclarationDecorator typeDeclarationDecorator : typeDeclarationDecorators) {
-            String packageName = typeDeclarationDecorator.getPackageName();
+        List<String> packages = new ArrayList<>();
+        for (TypeDeclarationInfo typeDeclarationInfo : typeDeclarationInfos) {
+            String packageName = typeDeclarationInfo.getPackageName();
 
             if (!packageName.equals(lastPackageName)) {
                 packages.add(packageName);
@@ -194,15 +194,44 @@ public class Compute {
     }
 
     /**
+     * Calculates the sum of the array using a lambda function
+     *
+     * @param array array to sum
+     * @param toSum function used to get an item value
+     * @param <T>   Type of an item
+     * @return the sum of the array
+     */
+    public static <T> int sum(List<T> array, ToIntFunction<T> toSum) {
+        int sum = 0;
+        for (T t : array) {
+            sum += toSum.applyAsInt(t);
+        }
+
+        return sum;
+    }
+
+    /**
+     * Calculates the average of the array using a lambda function
+     *
+     * @param array     array of values
+     * @param toAverage function to get an item value
+     * @param <T>       type of an item
+     * @return the average of the array
+     */
+    public static <T> float average(List<T> array, ToIntFunction<T> toAverage) {
+        return sum(array, toAverage) / array.size();
+    }
+
+    /**
      * Generates a an object representing the method call graph
      *
      * @param methods list of method decorators
      * @return an object representing a method call graph
      */
-    public static Graph methodGraph(List<MethodDeclarationDecorator> methods) {
+    public static Graph methodGraph(List<MethodDeclarationInfo> methods) {
         Graph graph = new Graph();
 
-        for (MethodDeclarationDecorator caller : methods) {
+        for (MethodDeclarationInfo caller : methods) {
             // there are people who call
             String callerString = caller.getShortWithParamTypes();
 
@@ -219,7 +248,7 @@ public class Compute {
 
             HashSet<Integer> callees = new HashSet<>();// list of called people
 
-            for (MethodInvocationDecorator callee : caller.getMethodCalls()) {
+            for (MethodInvocationInfo callee : caller.getMethodCalls()) {
                 // the ones who are called
                 String calleeString = callee.getShortWithParamTypes();
 

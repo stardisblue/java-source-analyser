@@ -1,4 +1,4 @@
-package com.stardisblue.ast.decorator;
+package com.stardisblue.ast.info;
 
 import com.stardisblue.logging.Logger;
 import org.eclipse.jdt.core.dom.IMethodBinding;
@@ -10,9 +10,8 @@ import java.util.ArrayList;
 /**
  * Decorating MethodInvocation
  */
-public class MethodInvocationDecorator {
-    private final MethodDeclarationDecorator parent;
-    private final MethodInvocation node;
+public class MethodInvocationInfo {
+    private final MethodDeclarationInfo parent;
     private final String name;
     private final String type;
     private final String packageName;
@@ -26,10 +25,9 @@ public class MethodInvocationDecorator {
      * @param parent parent element
      * @param node   decorated element
      */
-    public MethodInvocationDecorator(MethodDeclarationDecorator parent,
-                                     MethodInvocation node) {
+    public MethodInvocationInfo(MethodDeclarationInfo parent,
+                                MethodInvocation node) {
         this.parent = parent;
-        this.node = node;
 
         IMethodBinding binding = node.resolveMethodBinding();
 
@@ -85,10 +83,6 @@ public class MethodInvocationDecorator {
 
     public String getType() {
         return type;
-    }
-
-    public MethodInvocation getNode() {
-        return node;
     }
 
     public String getShortWithParamTypes() {

@@ -1,15 +1,16 @@
-package com.stardisblue.ast.decorator;
+package com.stardisblue.ast.info;
 
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 
 /**
  * Decorating a MethodParameter
  */
-public class ParameterDecorator {
+public class ParameterInfo {
 
-    private final MethodDeclarationDecorator parent;
-    private final SingleVariableDeclaration node;
-    private final ParameterizedTypeDecorator parameterizedTypeDecoratorType;
+    private final MethodDeclarationInfo parent;
+    private final ParameterizedTypeInfo parameterizedTypeDecoratorType;
+    private final String name;
+    private final String type;
 
     /**
      * Default constructer, elements are passed through via DI,
@@ -18,20 +19,21 @@ public class ParameterDecorator {
      * @param node                           decorated element
      * @param parameterizedTypeDecoratorType parameter type
      */
-    public ParameterDecorator(MethodDeclarationDecorator parent,
-                              SingleVariableDeclaration node,
-                              ParameterizedTypeDecorator parameterizedTypeDecoratorType) {
+    public ParameterInfo(MethodDeclarationInfo parent,
+                         SingleVariableDeclaration node,
+                         ParameterizedTypeInfo parameterizedTypeDecoratorType) {
         this.parent = parent;
-        this.node = node;
+        this.name = node.getName().toString();
+        this.type = node.getType().toString();
         this.parameterizedTypeDecoratorType = parameterizedTypeDecoratorType;
     }
 
     public String getName() {
-        return node.getName().toString();
+        return name;
     }
 
     public String getType() {
-        return node.getType().toString();
+        return type;
     }
 
     public String getClassType() {
@@ -45,5 +47,10 @@ public class ParameterDecorator {
 
     public String getFullName() {
         return getType() + " " + getName();
+    }
+
+    @Override
+    public String toString() {
+        return getFullName();
     }
 }

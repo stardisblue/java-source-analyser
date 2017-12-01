@@ -1,4 +1,4 @@
-package com.stardisblue.ast.decorator;
+package com.stardisblue.ast.info;
 
 
 import com.stardisblue.logging.Logger;
@@ -11,12 +11,11 @@ import java.util.List;
 /**
  * Decorating MethodDeclaration
  */
-public class MethodDeclarationDecorator {
+public class MethodDeclarationInfo {
 
-    private final TypeDeclarationDecorator parent;
-    private final MethodDeclaration node;
-    private final List<ParameterDecorator> parameters;
-    private final List<MethodInvocationDecorator> methodInvocations;
+    private final TypeDeclarationInfo parent;
+    private final List<ParameterInfo> parameters;
+    private final List<MethodInvocationInfo> methodInvocations;
 
     private final String name;
     private String fullName;
@@ -27,29 +26,28 @@ public class MethodDeclarationDecorator {
      * Default constructer, elements are passed through via DI,
      * the arrays are preallocated using size parameters
      *
+     * @param cu                    compilation unit used to get numberoflines
      * @param parent                parent element
      * @param node                  decorated element
      * @param parametersSize        number of parameters
      * @param methodInvocationsSize number of methodInvocations
      */
-    public MethodDeclarationDecorator(TypeDeclarationDecorator parent, MethodDeclaration node,
-                                      int parametersSize, int methodInvocationsSize) {
+    public MethodDeclarationInfo(CompilationUnit cu, MethodDeclaration node, TypeDeclarationInfo parent,
+                                 int parametersSize, int methodInvocationsSize) {
         // DI
-        this.node = node;
+        this.parent = parent;
         this.name = node.getName().toString();
         this.parameters = new ArrayList<>(parametersSize);
         this.methodInvocations = new ArrayList<>(methodInvocationsSize);
-        this.parent = parent;
 
-        CompilationUnit cu = this.parent.getParent();
         // counting line numbers
-        int startLine = cu.getLineNumber(this.node.getStartPosition());
+        int startLine = cu.getLineNumber(node.getStartPosition());
         // -1 for lenght correction
-        int endLine = cu.getLineNumber(this.node.getStartPosition() + this.node.getLength() - 1);
+        int endLine = cu.getLineNumber(node.getStartPosition() + node.getLength() - 1);
 
         this.numberOfLines = endLine - startLine;
 
-        Logger.println("└─ " + this.getShortWithParamTypes() + ": " + parametersSize + " parameters, "
+        Logger.println("└─ " + this.getShortName() + ": " + parametersSize + " parameters, "
                                + this.numberOfLines() + " lines",
                        Logger.DEBUG);
     }
@@ -60,7 +58,7 @@ public class MethodDeclarationDecorator {
      * @param parameters        the array of parameters
      * @param methodInvocations the array of method invocations
      */
-    public void setup(List<ParameterDecorator> parameters, List<MethodInvocationDecorator> methodInvocations) {
+    public void setup(List<ParameterInfo> parameters, List<MethodInvocationInfo> methodInvocations) {
         this.parameters.addAll(parameters);
         this.methodInvocations.addAll(methodInvocations);
     }
@@ -104,7 +102,7 @@ public class MethodDeclarationDecorator {
             return "";
         }
 
-        for (ParameterDecorator parameter : parameters) {
+        for (ParameterInfo parameter : parameters) {
             st.append(parameter.getShortName()).append(", ");
         }
 
@@ -116,7 +114,7 @@ public class MethodDeclarationDecorator {
         if (strParameters == null) {
             StringBuilder st = new StringBuilder();
 
-            for (ParameterDecorator parameter : parameters) {
+            for (ParameterInfo parameter : parameters) {
                 st.append(parameter.getFullName()).append(", ");
             }
             // aand we remove the last ouane
@@ -128,7 +126,7 @@ public class MethodDeclarationDecorator {
         return strParameters;
     }
 
-    public List<MethodInvocationDecorator> getMethodCalls() {
+    public List<MethodInvocationInfo> getMethodCalls() {
         return methodInvocations;
     }
 }

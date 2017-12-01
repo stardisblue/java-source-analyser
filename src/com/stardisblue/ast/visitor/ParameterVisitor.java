@@ -1,7 +1,7 @@
 package com.stardisblue.ast.visitor;
 
-import com.stardisblue.ast.decorator.MethodDeclarationDecorator;
-import com.stardisblue.ast.decorator.ParameterDecorator;
+import com.stardisblue.ast.info.MethodDeclarationInfo;
+import com.stardisblue.ast.info.ParameterInfo;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 
@@ -11,7 +11,7 @@ import java.util.List;
 public class ParameterVisitor extends ASTVisitor {
 
     private List<SingleVariableDeclarationWrapper> wrappers = new ArrayList<>();
-    private List<ParameterDecorator> decorators = new ArrayList<>();
+    private List<ParameterInfo> decorators = new ArrayList<>();
 
     @Override
     public boolean visit(SingleVariableDeclaration node) {
@@ -25,18 +25,17 @@ public class ParameterVisitor extends ASTVisitor {
         return super.visit(node);
     }
 
-    public List<ParameterDecorator> decorators(MethodDeclarationDecorator parent) {
+    public List<ParameterInfo> infos(MethodDeclarationInfo parent) {
         // if the decorators are already set
         if (!decorators.isEmpty()) return decorators;
 
         decorators = new ArrayList<>(wrappers.size());
 
         for (SingleVariableDeclarationWrapper w : wrappers) {
-            // - creating decorator
+            // - creating info
             // x cyclic dependency
             // - adding to the list of decorators
-            decorators.add(new ParameterDecorator(parent, w.node,
-                                                  w.parameterizedTypeVisitor.decorator()));
+            decorators.add(new ParameterInfo(parent, w.node, w.parameterizedTypeVisitor.info()));
         }
 
         // emptying once the decorators are created

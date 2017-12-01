@@ -1,4 +1,4 @@
-package com.stardisblue.ast.decorator;
+package com.stardisblue.ast.info;
 
 
 import com.stardisblue.logging.Logger;
@@ -10,11 +10,10 @@ import java.util.List;
 /**
  * Decorating FieldDeclaration
  */
-public class FieldDeclarationDecorator {
+public class FieldDeclarationInfo {
 
 
-    private final TypeDeclarationDecorator parent;
-    private final FieldDeclaration node;
+    private final TypeDeclarationInfo parent;
     private final Type type;
     private final List fragments;
 
@@ -25,12 +24,11 @@ public class FieldDeclarationDecorator {
      * @param parent parent element
      * @param node   current decorated element
      */
-    public FieldDeclarationDecorator(TypeDeclarationDecorator parent,
-                                     FieldDeclaration node) {
+    public FieldDeclarationInfo(TypeDeclarationInfo parent,
+                                FieldDeclaration node) {
         this.parent = parent;
-        this.node = node;
-        this.type = this.node.getType();
-        this.fragments = this.node.fragments();
+        this.type = node.getType();
+        this.fragments = node.fragments();
 
         Logger.println("└─ " + getType() + " : " + getFragments(), Logger.DEBUG);
 
@@ -42,9 +40,5 @@ public class FieldDeclarationDecorator {
 
     public List getFragments() {
         return fragments;
-    }
-
-    public TypeDeclarationDecorator getParent() {
-        return parent;
     }
 }
