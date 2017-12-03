@@ -76,31 +76,41 @@ public class MethodDeclarationInfo {
         return name;
     }
 
+    public String getMethod() {
+        return getName() + "(" + getStringParameters() + ")";
+    }
+
+    public String getCleanMethod() {
+        return getName() + "(" + getCleanStringParameters() + ")";
+    }
+
     public String getShortName() {
         return parent.getName() + "." + getName();
     }
 
+
     public String getFullName() {
         if (fullName == null) {
-            fullName = parent.getFullName() + "." + getName() + "(" + getStringParameters() + ")";
+            fullName = parent.getFullName() + "." + getMethod();
         }
         return fullName;
     }
 
     public String getShortWithParamTypes() {
-        return getShortName() + "(" + getCleanStringParameters() + ")";
+        return parent.getName() + "." + getCleanMethod();
     }
 
     public String getFullWithParamTypes() {
-        return parent.getFullName() + "." + getName() + "(" + getCleanStringParameters() + ")";
+        return parent.getFullName() + "." + getCleanMethod();
     }
 
     private String getCleanStringParameters() {
-        StringBuilder st = new StringBuilder();
-
         if (parameters.size() == 0) {
             return "";
         }
+
+        StringBuilder st = new StringBuilder();
+
 
         for (ParameterInfo parameter : parameters) {
             st.append(parameter.getShortName()).append(", ");
@@ -111,22 +121,32 @@ public class MethodDeclarationInfo {
     }
 
     private String getStringParameters() {
-        if (strParameters == null) {
-            StringBuilder st = new StringBuilder();
-
-            for (ParameterInfo parameter : parameters) {
-                st.append(parameter.getFullName()).append(", ");
-            }
-            // aand we remove the last ouane
-            st.delete(st.length() - 2, st.length());
-
-            return strParameters = st.toString();
+        if (parameters.size() == 0) {
+            return "";
         }
 
-        return strParameters;
+        if (strParameters != null) {
+            return strParameters;
+        }
+
+        StringBuilder st = new StringBuilder();
+
+
+        for (ParameterInfo parameter : parameters) {
+            st.append(parameter.getFullName()).append(", ");
+        }
+        // aand we remove the last ouane
+        st.delete(st.length() - 2, st.length());
+
+        return strParameters = st.toString();
+
     }
 
     public List<MethodInvocationInfo> getMethodCalls() {
         return methodInvocations;
+    }
+
+    public TypeDeclarationInfo getParent() {
+        return parent;
     }
 }

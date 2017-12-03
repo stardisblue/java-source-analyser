@@ -50,8 +50,8 @@ public class TypeDeclarationInfo {
     /**
      * Need to be called once, used to resolve cyclic dependency injection
      *
-     * @param fieldDeclarationInfos array of fields
-     * @param methodDeclarationInfos     array of methods
+     * @param fieldDeclarationInfos  array of fields
+     * @param methodDeclarationInfos array of methods
      */
     public void setup(List<FieldDeclarationInfo> fieldDeclarationInfos,
                       List<MethodDeclarationInfo> methodDeclarationInfos) {

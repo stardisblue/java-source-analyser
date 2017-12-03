@@ -6,7 +6,6 @@ import com.stardisblue.ast.structure.Graph;
 import com.stardisblue.ast.visitor.TypeDeclarationVisitor;
 import com.stardisblue.logging.Logger;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -153,6 +152,17 @@ public class Main {
                      (t) -> t.getFullName() + " : " + t.numberOfParameters() + " parameters");
 
         /*
+         * Class list and method
+         */
+        Display.title("Class List");
+        for (TypeDeclarationInfo item : classes) {
+            Display.item(item.getFullName());
+            Display.ul(item.getMethods(), MethodDeclarationInfo::getMethod, "  ");
+        }
+        Display.newline();
+
+
+        /*
          * Method call graph
          */
         // creation of the graph
@@ -161,7 +171,17 @@ public class Main {
         ArrayList<String> nodes = Compute.graphNodes(graph.getIds(), graph.getIsNodeInProject());
         List<String> links = Compute.graphLinks(graph.getLinkIds(), graph.getSourceCount());
         // display
-        Display.json(nodes, links);
+        Display.json("MethodCall Json graph", nodes, links);
+
+        /*
+         * Class call graph
+         */
+        Graph classGraph = Compute.classGraph(methods);
+        // generate Json Structure
+        ArrayList<String> classNodes = Compute.graphNodes(classGraph.getIds(), classGraph.getIsNodeInProject());
+        List<String> classLinks = Compute.graphLinks(classGraph.getLinkIds(), classGraph.getSourceCount());
+        Display.json("ClassCall Json graph", classNodes, classLinks);
+
     }
 
 
@@ -170,12 +190,12 @@ public class Main {
      * @return The apporpriate CompilationUnit
      */
     private static CompilationUnit parse(String fileContent) {
-        ASTParser parser = ASTParser.newParser(AST.JLS4);
+        ASTParser parser = ASTParser.newParser(AST.JLS9);
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
         parser.setResolveBindings(true); // we need bindings later on
         parser.setBindingsRecovery(true); // we need bindings later on
 
-        parser.setCompilerOptions(JavaCore.getOptions());
+        //parser.setCompilerOptions(JavaCore.getOptions());
 
         parser.setUnitName("stardisblue");
 

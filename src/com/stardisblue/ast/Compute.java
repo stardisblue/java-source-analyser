@@ -4,6 +4,7 @@ import com.stardisblue.ast.info.MethodDeclarationInfo;
 import com.stardisblue.ast.info.MethodInvocationInfo;
 import com.stardisblue.ast.info.TypeDeclarationInfo;
 import com.stardisblue.ast.structure.Graph;
+import com.stardisblue.logging.Logger;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -305,6 +306,7 @@ public class Compute {
 
         for (Map.Entry<Integer, HashSet<Integer>> linkEntry : linkIds.entrySet()) {
             int callerId = linkEntry.getKey();
+            Logger.println(callerId, Logger.DEBUG);
 
             for (int calleeId : linkEntry.getValue()) {
                 int parentCount = countParents.get(calleeId);
@@ -318,5 +320,56 @@ public class Compute {
         }
 
         return links;
+    }
+
+    public static Graph classGraph(List<MethodDeclarationInfo> methods) {
+        Graph graph = new Graph();
+
+        for (MethodDeclarationInfo caller : methods) {
+            // there are people who call
+            String callerString = caller.getParent().getName();
+
+            int callerId;
+            if (graph.has(callerString)) {// we have her in our phonebook
+                callerId = graph.get(callerString);// we get her number
+                graph.belongs(callerId, true); // she belongs to us because she's the caller
+            } else {// she does not exist in our phonebook
+                callerId = graph.nextId();// so we give her a number
+                graph.belongs(true);// she belongs to us because she's the caller
+                graph.beginCount(0); // we can begin to count the number of callees she has
+                graph.save(callerString, callerId); // we add her to our phonebook
+            }
+
+            HashSet<Integer> callees;// list of called people
+            if (graph.getLinkIds().containsKey(callerId)) {
+                callees = graph.getLinkIds().get(callerId);
+            } else {
+                callees = new HashSet<>();
+            }
+
+            for (MethodInvocationInfo callee : caller.getMethodCalls()) {
+                // the ones who are called
+                String calleeString = callee.getClassType();
+                Logger.println("  - " + calleeString, Logger.DEBUG);
+
+                int calleeId;
+                if (graph.has(calleeString)) { // we have him in our phonebook
+                    calleeId = graph.get(calleeString); // so we get the phone number
+                    graph.incrementCount(calleeId); // the called is being called once more
+                } else {// we do not have him in our phonebook
+                    calleeId = graph.nextId(); // so we get him a number
+                    graph.belongs(false); // he does not belong to us
+                    graph.beginCount(1); // he was at least called by the caller
+                    graph.save(calleeString, calleeId); // we save this guy's number
+                }
+
+                callees.add(calleeId); // we add this person to the list of called people
+            }
+
+            graph.link(callerId, callees);// we her and the people she called together
+        }
+
+        return graph;
+
     }
 }

@@ -61,19 +61,27 @@ public class Display {
     }
 
     public static <T> void ul(List<T> array, Function<T, String> display) {
-        for (T item : array) {
-            item(display.apply(item));
-        }
-
+        ul(array, display, "");
         System.out.println();
     }
 
-    public static void item(String item) {
-        System.out.println("- " + item);
+    public static <T> void ul(List<T> array, Function<T, String> display, String prefix) {
+        for (T item : array) {
+            item(display.apply(item), prefix);
+        }
+
     }
 
-    public static void json(ArrayList<String> nodes, List<String> links) {
-        title("Json Graph", 2);
+    public static void item(String item) {
+        item(item, "");
+    }
+
+    public static void item(String item, String prefix) {
+        System.out.println(prefix + "- " + item);
+    }
+
+    public static void json(String title, ArrayList<String> nodes, List<String> links) {
+        title(title, 2);
         System.out.println("{\"nodes\":[" + String.join(",", nodes) + "], " +
                                    "\"links\":[" + String.join(",", links) + "]}");
     }
