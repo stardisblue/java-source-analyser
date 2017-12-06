@@ -4,6 +4,7 @@ import com.stardisblue.ast.info.MethodDeclarationInfo;
 import com.stardisblue.ast.info.MethodInvocationInfo;
 import com.stardisblue.ast.info.TypeDeclarationInfo;
 import com.stardisblue.ast.structure.Graph;
+import com.stardisblue.ast.structure.Matrix;
 import com.stardisblue.logging.Logger;
 
 import java.util.*;
@@ -370,6 +371,27 @@ public class Compute {
         }
 
         return graph;
+    }
 
+
+    public static HashMap<String,HashMap<String, Integer>> classCoupling(List<TypeDeclarationInfo> classes, List<MethodDeclarationInfo> methods){
+        HashMap<String, HashMap<String, Integer>> classCouples = new HashMap<>();
+
+        ArrayList<String> classNames = new ArrayList<>(classes.size());
+
+        for (TypeDeclarationInfo aClass : classes) {
+            classNames.add(aClass.getFullName());
+        }
+
+        // we extract classnames
+        Matrix matrix = new Matrix(classNames);
+
+        for(MethodDeclarationInfo callee : methods){
+            for(MethodDeclarationInfo caller: callee.getMethodCalls()){
+                matrix.increment(callee.getParent().getFullName(), caller.getParent().getFullName());
+            }
+        }
+
+        return classCouples;
     }
 }

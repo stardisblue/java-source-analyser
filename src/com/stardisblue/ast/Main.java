@@ -20,6 +20,10 @@ public class Main {
 
     public static void main(String[] args) {
         Logger.enable();
+
+        /*
+         * TP3
+         */
         final File folder = new File(projectSourcePath);
 
         Collection<File> javaFiles = FileUtils.listFiles(folder, new String[]{"java"}, true);
@@ -182,6 +186,12 @@ public class Main {
         List<String> classLinks = Compute.graphLinks(classGraph.getLinkIds(), classGraph.getSourceCount());
         Display.json("ClassCall Json graph", classNodes, classLinks);
 
+        /*
+         * TP4
+         */
+
+         HashMap<String, HashMap<String, String>> classCoupling = Compute.couplingWeight(classes, methods);
+         Display.matrix("Class coupling matrix", classCoupling);
     }
 
 
