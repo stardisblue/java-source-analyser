@@ -57,8 +57,4 @@ public class Graph {
     public void incrementCount(int calleeId) {
         countParents.set(calleeId, countParents.get(calleeId) + 1);
     }
-
-    public void link(int callerId, HashSet<Integer> callees) {
-        linkIds.put(callerId, callees);
-    }
 }

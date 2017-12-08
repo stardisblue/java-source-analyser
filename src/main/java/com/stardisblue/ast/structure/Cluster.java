@@ -1,39 +1,61 @@
 package com.stardisblue.ast.structure;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Cluster<T> {
-    private Cluster first;
-    private Cluster last;
+    private Cluster<T> first;
+    private Cluster<T> last;
 
     private int id;
-    private List<T> objects;
+    private T object;
+    private double similarity;
 
     public Cluster(int id, T object) {
         this.id = id;
         first = null;
         last = null;
-        this.objects = new ArrayList<>(1);
-        this.objects.add(object);
+        this.object = object;
+        similarity = -1;
     }
 
-    Cluster(int id, Cluster<T> first, Cluster<T> last) {
+    Cluster(int id, Cluster<T> first, Cluster<T> last, int similarity) {
         this.id = id;
         this.first = first;
         this.last = last;
-        objects = null;
+        object = null;
+        this.similarity = similarity;
     }
 
     public boolean isLeaf() {
-        return objects != null;
+        return object != null;
     }
 
     public int getName() {
         return id;
     }
 
-    public List<T> getObjects() {
-        return objects;
+    public T getObject() {
+        return object;
+    }
+
+    /**
+     * Sets similarity only it has not been set before
+     *
+     * @param similarity the similarity value to set
+     */
+    public void initSimilarity(int similarity) {
+        if (this.similarity == -1) {
+            this.similarity = similarity;
+        }
+    }
+
+    public Cluster<T> getLast() {
+        return last;
+    }
+
+    public Cluster<T> getFirst() {
+        return first;
+    }
+
+    public double getSimilarity() {
+        return similarity;
     }
 }

@@ -2,7 +2,6 @@ package com.stardisblue.ast;
 
 import com.stardisblue.ast.structure.Matrix;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -104,7 +103,7 @@ public class Display {
         System.out.println(prefix + "- " + item);
     }
 
-    public static void json(String title, ArrayList<String> nodes, List<String> links) {
+    public static void json(String title, List<String> nodes, List<String> links) {
         title(title, 2);
         codeBlock("json", "{\"nodes\":[" + String.join(",", nodes) + "], " +
                 "\"links\":[" + String.join(",", links) + "]}");

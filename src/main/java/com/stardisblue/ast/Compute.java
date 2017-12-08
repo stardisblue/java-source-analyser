@@ -7,12 +7,11 @@ import com.stardisblue.ast.structure.Cluster;
 import com.stardisblue.ast.structure.ClusterManager;
 import com.stardisblue.ast.structure.Graph;
 import com.stardisblue.ast.structure.Matrix;
+import com.stardisblue.functional.TriConsumer;
 import com.stardisblue.logging.Logger;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.ToIntFunction;
 
 public class Compute {
     /**
@@ -38,193 +37,6 @@ public class Compute {
         return packages;
     }
 
-    /**
-     * Return all the elements of the array that are the same as the reference
-     *
-     * @param array      list of elements to compare
-     * @param reference  the reference
-     * @param comparison the function to compare with
-     * @param <T>        Type
-     * @return a list of all the elements in array that return true when using comparison with the reference
-     */
-    public static <T> List<T> getSameAs(List<T> array, T reference, BiFunction<T, T, Boolean> comparison) {
-        List<T> sames = new ArrayList<>();
-        for (T item : array) {
-            if (comparison.apply(item, reference)) sames.add(item);
-        }
-
-        return sames;
-    }
-
-    /**
-     * Will return the x% items of the array after sorting them using comparator.
-     * The number of elements is a percentage of the original array.
-     * Uses {@link Math#ceil(double)} to round up.
-     *
-     * @param array      the reference array
-     * @param percentage the percentage of classes to display
-     * @param comparator Used to sort the reference array
-     * @param <T>        Type of the sublist
-     * @return A list containing the first items in sorted order (using comparator),
-     * it's length is a percentage of the original array
-     */
-    public static <T> List<T> sortedTopSubList(List<T> array, int percentage, Comparator<? super T> comparator) {
-        // we copy
-        List<T> cArray = new ArrayList<>(array);
-
-        // we sort
-        cArray.sort(comparator);
-
-        // we count
-        float floatCount = cArray.size() * (float) percentage / 100;
-        int printableQte = (int) Math.ceil(floatCount);
-
-        // we trim
-        return cArray.subList(0, printableQte);
-    }
-
-
-    /**
-     * Get the items having value &gt; minimalValue.
-     *
-     * @param array        list of items
-     * @param minimalValue minimal value
-     * @param value        value to check
-     * @param <T>          type of the elements
-     * @return a list containing all the elements having a value &gt; minimalValue
-     */
-    public static <T> List<T> hasMoreThan(List<T> array, int minimalValue, ToIntFunction<T> value) {
-        List<T> filtered = new ArrayList<>();
-
-        for (T element : array) {
-            if (value.applyAsInt(element) > minimalValue) {
-                filtered.add(element);
-            }
-        }
-
-        return filtered;
-    }
-
-    /**
-     * Sort and intersects the lists using the comparator
-     *
-     * @param first      list
-     * @param second     list
-     * @param comparator used to sort and compare the lists
-     * @param <T>        List type
-     * @return the intersection of the lists
-     */
-    public static <T> List<T> intersect(List<T> first, List<T> second, Comparator<T> comparator) {
-        List<T> cFirst = new ArrayList<>(first);
-        List<T> cSecond = new ArrayList<>(second);
-        cFirst.sort(comparator);
-        cSecond.sort(comparator);
-
-        return sortedIntersect(cFirst, cSecond, comparator);
-    }
-
-    /**
-     * Intersects using comparator
-     *
-     * @param first      sorted list
-     * @param second     sorted list
-     * @param comparator used to compare the lists
-     * @param <T>        List type
-     * @return the intersection of the lists
-     */
-    public static <T> List<T> sortedIntersect(List<T> first, List<T> second, Comparator<T> comparator) {
-        Iterator<T> iterF = first.iterator();
-        Iterator<T> iterS = second.iterator();
-
-        List<T> intersection = new ArrayList<>();
-
-        if (iterF.hasNext() && iterS.hasNext()) {
-            T elemF = iterF.next();
-            T elemS = iterS.next();
-            while (true) {
-                int comparison = Integer.signum(comparator.compare(elemF, elemS));
-                if (comparison == 0) {
-                    intersection.add(elemF);
-
-                    if (iterF.hasNext() && iterS.hasNext()) {
-                        elemF = iterF.next();
-                        elemS = iterS.next();
-                    } else {
-                        break;
-                    }
-
-                } else if (comparison == 1) {
-                    if (iterS.hasNext()) {
-                        elemS = iterS.next();
-                    } else {
-                        break;
-                    }
-
-                } else if (comparison == -1) {
-                    if (iterF.hasNext()) {
-                        elemF = iterF.next();
-                    } else {
-                        break;
-                    }
-
-                } else {
-                    break;
-                }
-            }
-        }
-
-
-        return intersection;
-    }
-
-
-    /**
-     * Iterates over array and extracts the elements using the extractor, adds all in a list and returns it
-     *
-     * @param array     list to extract from
-     * @param extractor the extraction protocol
-     * @param <T>       Type of the owning item
-     * @param <U>       Type of the owned item
-     * @return a concatened list of all the extracted elements
-     */
-    public static <T, U> List<U> extract(List<T> array, Function<T, List<U>> extractor) {
-        List<U> extracted = new ArrayList<>();
-
-        for (T item : array) {
-            extracted.addAll(extractor.apply(item));
-        }
-
-        return extracted;
-    }
-
-    /**
-     * Calculates the sum of the array using a lambda function
-     *
-     * @param array array to sum
-     * @param toSum function used to get an item value
-     * @param <T>   Type of an item
-     * @return the sum of the array
-     */
-    public static <T> int sum(List<T> array, ToIntFunction<T> toSum) {
-        int sum = 0;
-        for (T t : array) {
-            sum += toSum.applyAsInt(t);
-        }
-
-        return sum;
-    }
-
-    /**
-     * Calculates the average of the array using a lambda function
-     *
-     * @param array     array of values
-     * @param toAverage function to get an item value
-     * @param <T>       type of an item
-     * @return the average of the array
-     */
-    public static <T> float average(List<T> array, ToIntFunction<T> toAverage) {
-        return sum(array, toAverage) / array.size();
-    }
 
     /**
      * Generates a an object representing the method call graph
@@ -233,11 +45,45 @@ public class Compute {
      * @return an object representing a method call graph
      */
     public static Graph methodGraph(List<MethodDeclarationInfo> methods) {
+        return graph(methods,
+                     MethodDeclarationInfo::getMethodCalls,
+                     MethodDeclarationInfo::getShortWithParamTypes,
+                     MethodInvocationInfo::getShortWithParamTypes);
+    }
+
+    /**
+     * Generates an object representing the class call graph
+     *
+     * @param methods list of methodDecorators
+     * @return an object representing a class call graph
+     */
+    public static Graph classGraph(List<MethodDeclarationInfo> methods) {
+        return graph(methods,
+                     MethodDeclarationInfo::getMethodCalls,
+                     (m) -> m.getParent().getName(),
+                     MethodInvocationInfo::getClassType);
+    }
+
+    /**
+     * Creates a graph structure iterating over parent and child using keynode and valuenode as references
+     *
+     * @param parent       Parent list
+     * @param child        invoked foreach parent to retrieve the childrens
+     * @param parentString invoked foreach parent to get the parent string value
+     * @param childString  invoked foreach child to get the child string value
+     * @param <T>
+     * @param <U>
+     * @return
+     */
+    public static <T, U> Graph graph(List<T> parent,
+                                     Function<T, List<U>> child,
+                                     Function<T, String> parentString,
+                                     Function<U, String> childString) {
         Graph graph = new Graph();
 
-        for (MethodDeclarationInfo caller : methods) {
+        for (T caller : parent) {
             // there are people who call
-            String callerString = caller.getShortWithParamTypes();
+            String callerString = parentString.apply(caller);
 
             int callerId;
             if (graph.has(callerString)) {// we have her in our phonebook
@@ -250,11 +96,12 @@ public class Compute {
                 graph.save(callerString, callerId); // we add her to our phonebook
             }
 
-            HashSet<Integer> callees = new HashSet<>();// list of called people
+            // we her and the people she called together
+            HashSet<Integer> callees = graph.getLinkIds().computeIfAbsent(callerId, (k) -> new HashSet<>());
 
-            for (MethodInvocationInfo callee : caller.getMethodCalls()) {
+            for (U callee : child.apply(caller)) {
                 // the ones who are called
-                String calleeString = callee.getShortWithParamTypes();
+                String calleeString = childString.apply(callee);
 
                 int calleeId;
                 if (graph.has(calleeString)) { // we have him in our phonebook
@@ -269,11 +116,9 @@ public class Compute {
 
                 callees.add(calleeId); // we add this person to the list of called people
             }
-
-            graph.link(callerId, callees);// we her and the people she called together
         }
 
-        return graph; // end of it :)
+        return graph;
     }
 
     /**
@@ -283,8 +128,7 @@ public class Compute {
      * @param belongsToProject if the node belongs to the repository
      * @return an array containing a node represented as a json object
      */
-    public static ArrayList<String> graphNodes(HashMap<String, Integer> nodeIds,
-                                               ArrayList<Boolean> belongsToProject) {
+    public static ArrayList<String> graphNodes(HashMap<String, Integer> nodeIds, ArrayList<Boolean> belongsToProject) {
         ArrayList<String> nodes = new ArrayList<>(nodeIds.size());
 
         for (Map.Entry<String, Integer> nodeEntry : nodeIds.entrySet()) {
@@ -293,6 +137,7 @@ public class Compute {
                               "\"name\": \"" + nodeEntry.getKey() + "\", " +
                               "\"own\": " + (belongsToProject.get(nodeEntry.getValue()) ? "true" : "false") + "}");
         }
+
         return nodes;
     }
 
@@ -303,13 +148,11 @@ public class Compute {
      * @param countParents number of source nodes for a given targetNodeId
      * @return an array containing a links represented as json object
      */
-    public static List<String> graphLinks(HashMap<Integer, HashSet<Integer>> linkIds,
-                                          ArrayList<Integer> countParents) {
+    public static List<String> graphLinks(HashMap<Integer, HashSet<Integer>> linkIds, ArrayList<Integer> countParents) {
         ArrayList<String> links = new ArrayList<>();
 
         for (Map.Entry<Integer, HashSet<Integer>> linkEntry : linkIds.entrySet()) {
             int callerId = linkEntry.getKey();
-            Logger.println(callerId, Logger.DEBUG);
 
             for (int calleeId : linkEntry.getValue()) {
                 int parentCount = countParents.get(calleeId);
@@ -323,56 +166,6 @@ public class Compute {
         }
 
         return links;
-    }
-
-    public static Graph classGraph(List<MethodDeclarationInfo> methods) {
-        Graph graph = new Graph();
-
-        for (MethodDeclarationInfo caller : methods) {
-            // there are people who call
-            String callerString = caller.getParent().getName();
-
-            int callerId;
-            if (graph.has(callerString)) {// we have her in our phonebook
-                callerId = graph.get(callerString);// we get her number
-                graph.belongs(callerId, true); // she belongs to us because she's the caller
-            } else {// she does not exist in our phonebook
-                callerId = graph.nextId();// so we give her a number
-                graph.belongs(true);// she belongs to us because she's the caller
-                graph.beginCount(0); // we can begin to count the number of callees she has
-                graph.save(callerString, callerId); // we add her to our phonebook
-            }
-
-            HashSet<Integer> callees;// list of called people
-            if (graph.getLinkIds().containsKey(callerId)) {
-                callees = graph.getLinkIds().get(callerId);
-            } else {
-                callees = new HashSet<>();
-            }
-
-            for (MethodInvocationInfo callee : caller.getMethodCalls()) {
-                // the ones who are called
-                String calleeString = callee.getClassType();
-                Logger.println("  - " + calleeString, Logger.DEBUG);
-
-                int calleeId;
-                if (graph.has(calleeString)) { // we have him in our phonebook
-                    calleeId = graph.get(calleeString); // so we get the phone number
-                    graph.incrementCount(calleeId); // the called is being called once more
-                } else {// we do not have him in our phonebook
-                    calleeId = graph.nextId(); // so we get him a number
-                    graph.belongs(false); // he does not belong to us
-                    graph.beginCount(1); // he was at least called by the caller
-                    graph.save(calleeString, calleeId); // we save this guy's number
-                }
-
-                callees.add(calleeId); // we add this person to the list of called people
-            }
-
-            graph.link(callerId, callees);// we her and the people she called together
-        }
-
-        return graph;
     }
 
 
@@ -397,6 +190,7 @@ public class Compute {
         // making the tree
         while (clusterManager.getClusters().size() > 1) {
             int[] closestPair = clusterManager.getClosestPairId();
+            clusterManager.initSimilarity(closestPair[0], closestPair[1]);
             clusterManager.updateMatrix(closestPair[0], closestPair[1]);
         }
 
@@ -435,5 +229,91 @@ public class Compute {
         matrix.generateTable();
 
         return matrix;
+    }
+
+    public static List<String> dendrogramNodes(int nodeQuantity, Cluster<String> cluster) {
+        LinkedList<Cluster<String>> inputList = new LinkedList<>();
+        inputList.add(cluster);
+
+        return queueIteration(inputList, (queue, item, list) -> {
+            int id = item.getName();
+            String name;
+
+            if (item.isLeaf()) {
+                name = item.getObject();
+            } else {
+                name = String.valueOf(item.getSimilarity());
+
+                queue.add(item.getFirst());
+                queue.add(item.getLast());
+            }
+
+            list.add("{\"id\":" + id + ", " + "\"name\": \"" + name + "\", " + "\"own\": " + true + "}");
+        });
+    }
+
+    public static List<String> dendrogramLinks(Cluster<String> cluster) {
+        LinkedList<Cluster<String>> inputList = new LinkedList<>();
+        inputList.add(cluster);
+
+        return queueIteration(inputList, (queue, item, output) -> {
+            if (item.isLeaf()) {
+                return;
+            }
+
+            Cluster<String> first = item.getFirst();
+            Cluster<String> last = item.getLast();
+
+            queue.add(first);
+            queue.add(last);
+
+            output.add("{\"source\":" + item.getName() + ", " +
+                               "\"target\": " + first.getName() + ", " + "\"str\": " + 1 + "}");
+            output.add("{\"source\":" + item.getName() + ", " +
+                               "\"target\": " + last.getName() + ", " + "\"str\": " + 1 + "}");
+        });
+    }
+
+    /**
+     * Separes the cluster into partition depending on the similarity between parent and child clusters
+     *
+     * @param cluster the cluster to partition
+     * @return a list of partitions
+     */
+    public static List<Cluster<String>> clusterSelection(Cluster<String> cluster) {
+        LinkedList<Cluster<String>> inputList = new LinkedList<>();
+        inputList.add(cluster);
+
+        return queueIteration(inputList, (queue, item, list) -> {
+            if (item.isLeaf()) {
+                return;
+            }
+
+            Cluster<String> first = item.getFirst();
+            Cluster<String> last = item.getLast();
+
+            if (item.getSimilarity() > (first.getSimilarity() + last.getSimilarity()) / 2) {
+                list.add(item);
+            } else {
+                if (!first.isLeaf()) {
+                    queue.add(first);
+                }
+                if (!last.isLeaf()) {
+                    queue.add(last);
+                }
+            }
+        });
+    }
+
+    public static <T, R> List<R> queueIteration(Queue<T> queue, TriConsumer<Queue<T>, T, List<R>> operation) {
+        List<R> output = new ArrayList<>();
+
+        while (!queue.isEmpty()) {
+            T itemQueue = queue.remove();
+
+            operation.apply(queue, itemQueue, output);
+        }
+
+        return output;
     }
 }

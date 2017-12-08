@@ -6,6 +6,8 @@ import com.stardisblue.ast.structure.Cluster;
 import com.stardisblue.ast.structure.Graph;
 import com.stardisblue.ast.structure.Matrix;
 import com.stardisblue.ast.visitor.TypeDeclarationVisitor;
+import com.stardisblue.logging.Logger;
+import com.stardisblue.utils.ListUtils;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -22,10 +24,10 @@ public class Main {
     private static String jrePath = System.getProperty("java.home") + "\\lib\\rt.jar";
 
     public static void main(String[] args) {
-        //Logger.enable();
+        Logger.enable();
 
         /*
-         * TP3
+         * Setting up AST
          */
         final File folder = new File(projectSourcePath);
 
@@ -33,8 +35,8 @@ public class Main {
 
         List<TypeDeclarationInfo> classes = new ArrayList<>(javaFiles.size());
 
+        // constructing class structure
         try {
-
             for (File file : javaFiles) {
                 String content = FileUtils.readFileToString(file, UTF_8);
                 CompilationUnit compilationUnit = parse(content);
@@ -48,29 +50,31 @@ public class Main {
             e.printStackTrace();
         }
 
-        //Logger.println(classes, Logger.DEBUG);
-
         // All classes :
         // List<TypeDeclarationInfo> classes // already set up
         // All Methods
-        List<MethodDeclarationInfo> methods = Compute.extract(classes, TypeDeclarationInfo::getMethods);
+        List<MethodDeclarationInfo> methods = ListUtils.extract(classes, TypeDeclarationInfo::getMethods);
+
+
 
         Display.title("Source Analyzer Statistics");
 
         /*
+         * TP3
+         *
          * General Information
          */
         Display.title("General Information", 2);
 
         Display.item("Number of classes : " + classes.size());
         Display.item("Total number of lines : " +
-                             Compute.sum(classes, TypeDeclarationInfo::numberOfLines));
+                             ListUtils.sum(classes, TypeDeclarationInfo::numberOfLines));
         Display.item("Average number of methods/class : " +
-                             Compute.average(classes, TypeDeclarationInfo::numberOfMethods));
+                             ListUtils.average(classes, TypeDeclarationInfo::numberOfMethods));
         Display.item("Average number of lines/method : " +
-                             Compute.average(methods, MethodDeclarationInfo::numberOfLines));
+                             ListUtils.average(methods, MethodDeclarationInfo::numberOfLines));
         Display.item("Average number of fields/class : " +
-                             Compute.average(classes, TypeDeclarationInfo::numberOfFields));
+                             ListUtils.average(classes, TypeDeclarationInfo::numberOfFields));
         Display.newline();
 
         /*
@@ -85,8 +89,8 @@ public class Main {
         int percentageMethods = 10;
         // filter
         List<TypeDeclarationInfo> mostMethods =
-                Compute.sortedTopSubList(classes, percentageMethods,
-                                         (o1, o2) -> o2.numberOfMethods() - o1.numberOfMethods());
+                ListUtils.sortedTopSubList(classes, percentageMethods,
+                                           (o1, o2) -> o2.numberOfMethods() - o1.numberOfMethods());
         // display
         Display.withMost("Class(es)", "Method(s)", mostMethods, classes.size(), percentageMethods,
                          t -> t.getFullName() + " : " + t.numberOfMethods() + " method(s)");
@@ -97,8 +101,8 @@ public class Main {
         int percentageFields = 10;
         // filter
         List<TypeDeclarationInfo> mostFields =
-                Compute.sortedTopSubList(classes, percentageFields,
-                                         (o1, o2) -> o2.numberOfFields() - o1.numberOfFields());
+                ListUtils.sortedTopSubList(classes, percentageFields,
+                                           (o1, o2) -> o2.numberOfFields() - o1.numberOfFields());
         // display
         Display.withMost("Class(es)", "Field(s)", mostFields, classes.size(), percentageFields,
                          t -> t.getFullName() + " : " + t.numberOfFields() + " field(s)");
@@ -109,7 +113,7 @@ public class Main {
          */
         // intersection
         List<TypeDeclarationInfo> mostMethodsFields =
-                Compute.intersect(mostMethods, mostFields, Comparator.comparing(TypeDeclarationInfo::getName));
+                ListUtils.intersect(mostMethods, mostFields, Comparator.comparing(TypeDeclarationInfo::getName));
         //  sort
         mostMethodsFields.sort((o1, o2) -> o2.numberOfMethods() - o1.numberOfMethods()
                 + o2.numberOfFields() - o1.numberOfFields());
@@ -127,7 +131,7 @@ public class Main {
         int minimalValue = 3;
         // filter
         List<TypeDeclarationInfo> filteredByMethodNumber =
-                Compute.hasMoreThan(classes, minimalValue, TypeDeclarationInfo::numberOfMethods);
+                ListUtils.hasMoreThan(classes, minimalValue, TypeDeclarationInfo::numberOfMethods);
         // display
         Display.list("Class(es) with More than " + minimalValue + " Method(s)", filteredByMethodNumber,
                      t -> t.getFullName() + " : " + t.numberOfMethods() + " method(s)");
@@ -138,8 +142,8 @@ public class Main {
         int percentageMethodLines = 10;
         // filter
         List<MethodDeclarationInfo> mostMethodLines =
-                Compute.sortedTopSubList(methods, percentageMethodLines,
-                                         (m1, m2) -> m2.numberOfLines() - m1.numberOfLines());
+                ListUtils.sortedTopSubList(methods, percentageMethodLines,
+                                           (m1, m2) -> m2.numberOfLines() - m1.numberOfLines());
         // display
         Display.withMost("Method(s)", "Line(s)", mostMethodLines, methods.size(), percentageMethodLines,
                          m -> m.getShortName() + " : " + m.numberOfLines() + " line(s)");
@@ -152,8 +156,8 @@ public class Main {
                 Collections.max(methods, Comparator.comparingInt(MethodDeclarationInfo::numberOfParameters));
         // get same as max
         List<MethodDeclarationInfo> maxParamMethods =
-                Compute.getSameAs(methods, maxParamMethod,
-                                  (m1, m2) -> m1.numberOfParameters() == m2.numberOfParameters());
+                ListUtils.getSameAs(methods, maxParamMethod,
+                                    (m1, m2) -> m1.numberOfParameters() == m2.numberOfParameters());
         // display
         Display.list("Method(s) With The Highest Number of Parameter(s)", maxParamMethods,
                      (t) -> t.getFullName() + " : " + t.numberOfParameters() + " parameters");
@@ -175,7 +179,7 @@ public class Main {
         // creation of the graph
         Graph graph = Compute.methodGraph(methods);
         // generate Json Structure
-        ArrayList<String> nodes = Compute.graphNodes(graph.getIds(), graph.getIsNodeInProject());
+        List<String> nodes = Compute.graphNodes(graph.getIds(), graph.getIsNodeInProject());
         List<String> links = Compute.graphLinks(graph.getLinkIds(), graph.getSourceCount());
         // display
         Display.json("MethodCall Json graph", nodes, links);
@@ -185,21 +189,37 @@ public class Main {
          */
         Graph classGraph = Compute.classGraph(methods);
         // generate Json Structure
-        ArrayList<String> classNodes = Compute.graphNodes(classGraph.getIds(), classGraph.getIsNodeInProject());
+        List<String> classNodes = Compute.graphNodes(classGraph.getIds(), classGraph.getIsNodeInProject());
         List<String> classLinks = Compute.graphLinks(classGraph.getLinkIds(), classGraph.getSourceCount());
         Display.json("ClassCall Json graph", classNodes, classLinks);
 
         /*
          * TP4
+         *
+         * class coupling matrix
          */
-
         Matrix matrix = Compute.classCoupling(classes, methods);
         Display.matrix("Class coupling matrix", matrix);
 
 
+        /*
+         * Hierarchic Clustering
+         */
         Cluster<String> cluster = Compute.hierarchicClustering(matrix);
+        List<String> dendrogramNodes = Compute.dendrogramNodes(classes.size(), cluster);
+        List<String> dendrogramLinks = Compute.dendrogramLinks(cluster);
+        Display.json("Dendrogram Cluster graph", dendrogramNodes, dendrogramLinks);
 
-        System.out.println(cluster);
+        /*
+         * Cluster Selection
+         */
+        List<Cluster<String>> partitions = Compute.clusterSelection(cluster);
+        List<String> partitionedLinks = new ArrayList<>();
+        for (Cluster<String> partition : partitions) {
+            partitionedLinks.addAll(Compute.dendrogramLinks(partition));
+        }
+        Display.json("Dendrogram Partition graph", dendrogramNodes, partitionedLinks);
+
     }
 
 

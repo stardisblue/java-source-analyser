@@ -33,8 +33,22 @@ public class ClusterManager<T> {
         }
     }
 
-    public ArrayList<Cluster<T>> getClusters() {
-        return clusters;
+    /**
+     * Sets up cluster similarity only if the clusters did not have similarity values
+     *
+     * @param firstId first clusterId
+     * @param lastId  second clusterId
+     */
+    public void initSimilarity(int firstId, int lastId) {
+        // if one of these cluster is not present in my matrix
+        if (firstId == lastId) {
+            return;
+        }
+        // the number of links between them
+        int similarityValue = dynamicMatrix[firstId][lastId] + dynamicMatrix[lastId][firstId];
+
+        clusters.get(firstId).initSimilarity(similarityValue);
+        clusters.get(lastId).initSimilarity(similarityValue);
     }
 
     /**
@@ -81,7 +95,8 @@ public class ClusterManager<T> {
         }
 
         // the fused cluster
-        Cluster<T> fused = new Cluster<>(fusedName, toFuseFirst, toFuseLast);
+        int similarity = dynamicMatrix[firstId][lastId] + dynamicMatrix[lastId][firstId];
+        Cluster<T> fused = new Cluster<>(fusedName, toFuseFirst, toFuseLast, similarity);
 
         // we add it as last
         int fusedId = replacedClusterIds.size();
@@ -92,20 +107,21 @@ public class ClusterManager<T> {
         clusterIds = replacedClusterIds;
 
         int iterCorrection = 0; // because reindexing and also because they have not the same size
-        int[][] updatedDynamicMatrix = new int[fusedCapacity][fusedCapacity];
+        int[][] updatedDynamicMatrix = new int[fusedCapacity][fusedCapacity]; // one size less matrix
         for (int i = 0; i < dynamicMatrix.length; i++) {
-            if (i == lastId || i == firstId) {
+            if (i == lastId || i == firstId) { // copy while ignoring the removed clusters
                 ++iterCorrection;
                 continue;
             }
-
+            // setting up the values for the merged cluster
             updatedDynamicMatrix[fusedId][i - iterCorrection] = dynamicMatrix[firstId][i] + dynamicMatrix[lastId][i];
             updatedDynamicMatrix[i - iterCorrection][fusedId] = dynamicMatrix[i][firstId] + dynamicMatrix[i][lastId];
         }
 
         // the sum of first with first and last with last and the value between the two of them
-        updatedDynamicMatrix[fusedId][fusedId] = dynamicMatrix[firstId][firstId] + dynamicMatrix[lastId][lastId] +
-                dynamicMatrix[firstId][lastId] + dynamicMatrix[lastId][firstId];
+        // we dont care about the linktoself value
+        //updatedDynamicMatrix[fusedId][fusedId] = dynamicMatrix[firstId][firstId] + dynamicMatrix[lastId][lastId] +
+        //        dynamicMatrix[firstId][lastId] + dynamicMatrix[lastId][firstId];
 
         // now we need to remove the ancient link
         int rowCorrection = 0;
@@ -125,10 +141,9 @@ public class ClusterManager<T> {
             }
         }
 
+        // the two loop can be merged into one, but I will leave it like that for clarity purpose
+
         dynamicMatrix = updatedDynamicMatrix;
-
-        // end of the update;
-
     }
 
     /**
@@ -154,5 +169,9 @@ public class ClusterManager<T> {
         }
 
         return pair;
+    }
+
+    public ArrayList<Cluster<T>> getClusters() {
+        return clusters;
     }
 }
