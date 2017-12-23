@@ -32,11 +32,14 @@ public class Main {
     @Parameter(description = "sourcepath")
     private String projectSourcePath = System.getProperty("user.dir") + "/src/main/java/";
 
+    @Parameter(names = {"-o", "--output"}, description = "output file")
+    private String output = "results.md";
 
-    @Parameter(names = "-rt", description = "path to rt.jar", required = true)
-    private String[] classpaths = {System.getProperty("java.home") + "\\lib\\rt.jar"};
 
-    @Parameter(names = {"-v", "--min-amount-methods"}, description = "Get classes with more than n methods", required = true)
+    @Parameter(names = "-rt", description = "path to classpath")
+    private List<String> classpaths;
+
+    @Parameter(names = {"-v", "--min-amount-methods"}, description = "Get classes with more than n methods")
     private int minimalValue = 3;
 
     @Parameter(names = {"-m", "--method-percentage"}, description = "Percentage of top classes with most method")
@@ -48,6 +51,11 @@ public class Main {
     @Parameter(names = {"-f", "--field-percentage"}, description = "Percentage of top classes with most fields")
     private int percentageFields = 10;
 
+    public Main() {
+        classpaths = new ArrayList<>();
+        classpaths.add(System.getProperty("java.home") + "\\lib\\rt.jar");
+    }
+
 
     /**
      * Main method
@@ -58,10 +66,14 @@ public class Main {
         Main main = new Main();
         JCommander jcommander = JCommander.newBuilder().addObject(main).build();
         jcommander.parse(args);
-        main.run(jcommander);
+        try {
+            main.run(jcommander);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void run(JCommander jcommander) {
+    private void run(JCommander jcommander) throws IOException {
         if (help) { // displays the help
             jcommander.usage();
             return;
@@ -71,6 +83,8 @@ public class Main {
             Logger.enable();
         }
 
+        // setting up result file
+        Display.setOutput(output);
 
         /*
          * Setting up AST
@@ -223,7 +237,10 @@ public class Main {
         List<String> nodes = Compute.graphNodes(graph.getIds(), graph.getIsNodeInProject());
         List<String> links = Compute.graphLinks(graph.getLinkIds(), graph.getSourceCount());
         // display
-        Display.json("MethodCall Json graph", nodes, links);
+        Display.title("MethodCall Json graph", 2);
+        Display.blockquote("written in `method-call-output.json`");
+        // write
+        Write.json("method-call-output.json", nodes, links);
 
         /*
          * Class call graph
@@ -232,7 +249,12 @@ public class Main {
         // generate Json Structure
         List<String> classNodes = Compute.graphNodes(classGraph.getIds(), classGraph.getIsNodeInProject());
         List<String> classLinks = Compute.graphLinks(classGraph.getLinkIds(), classGraph.getSourceCount());
-        Display.json("ClassCall Json graph", classNodes, classLinks);
+        // display
+        Display.title("ClassCall Json graph", 2);
+        Display.blockquote("written in `class-call-output.json`");
+        // write
+        Write.json("class-call-output.json", classNodes, classLinks);
+
 
         /*
          * TP4
@@ -240,8 +262,8 @@ public class Main {
          * class coupling matrix
          */
         Matrix matrix = Compute.classCoupling(classes, methods);
+        // display
         Display.matrix("Class coupling matrix", matrix);
-
 
         /*
          * Hierarchic Clustering
@@ -249,8 +271,11 @@ public class Main {
         Cluster<String> cluster = Compute.hierarchicClustering(matrix);
         List<String> dendrogramNodes = Compute.dendrogramNodes(classes.size(), cluster);
         List<String> dendrogramLinks = Compute.dendrogramLinks(cluster);
-        Display.json("Dendrogram Cluster graph", dendrogramNodes, dendrogramLinks);
-
+        // display
+        Display.title("Dendrogram Cluster graph", 2);
+        Display.blockquote("written in `dendogram-output.json`");
+        // write
+        Write.json("dendogram-output.json", dendrogramNodes, dendrogramLinks);
         /*
          * Cluster Selection
          */
@@ -259,9 +284,12 @@ public class Main {
         for (Cluster<String> partition : partitions) {
             partitionedLinks.addAll(Compute.dendrogramLinks(partition));
         }
-        Display.json("Dendrogram Partition graph", dendrogramNodes, partitionedLinks);
+        // display
+        Display.title("Dendrogram Partition graph", 2);
+        Display.blockquote("written in `dendogram-partition.json`");
+        // write
+        Write.json("dendogram-partition.json", dendrogramNodes, partitionedLinks);
     }
-
 
     /**
      * @param fileContent the content of a javafile
@@ -279,7 +307,7 @@ public class Main {
 
         String[] sources = {projectSourcePath};
 
-        parser.setEnvironment(classpaths, sources, new String[]{"UTF-8"}, true);
+        parser.setEnvironment(classpaths.toArray(new String[]{}), sources, new String[]{"UTF-8"}, true);
         parser.setSource(fileContent.toCharArray()); // set source
         return (CompilationUnit) parser.createAST(null /* IProgressMonitor */); // parse
     }

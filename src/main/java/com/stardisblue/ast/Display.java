@@ -2,12 +2,17 @@ package com.stardisblue.ast;
 
 import com.stardisblue.ast.structure.Matrix;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
 public class Display {
+
+    private static PrintStream output;
 
     /**
      * Displays the title
@@ -30,7 +35,8 @@ public class Display {
      */
     public static void paragraph(String content) {
         System.out.println(content);
-        System.out.println();
+        output.println(content);
+        newline();
     }
 
     public static <T> void list(String name, List<T> array, Function<T, String> display) {
@@ -55,7 +61,7 @@ public class Display {
                                     int originalSize, int percent,
                                     Function<T, String> display) {
         list(percent + "% (" + filtered.size() + "/" + originalSize + ") of " + type + " With Most " + filter,
-             filtered, display);
+                filtered, display);
     }
 
     public static void blockquote(String bockquote) {
@@ -81,7 +87,11 @@ public class Display {
     }
 
     public static void row(String[] row) {
-        System.out.println("| " + String.join(" | ", row) + " |");
+        String strRow = "| " + String.join(" | ", row) + " |";
+
+        System.out.println(strRow);
+
+        output.println(strRow);
     }
 
     public static <T> void ul(List<T> array, Function<T, String> display) {
@@ -100,7 +110,11 @@ public class Display {
     }
 
     public static void item(String item, String prefix) {
-        System.out.println(prefix + "- " + item);
+        String listItem = prefix + "- " + item;
+
+        System.out.println(listItem);
+
+        output.println(listItem);
     }
 
     public static void json(String title, List<String> nodes, List<String> links) {
@@ -110,13 +124,25 @@ public class Display {
     }
 
     public static void codeBlock(String language, String content) {
-        System.out.println("```" + language);
+        String codeBlockMarker = "```";
+        String beginCodeBlock = codeBlockMarker + language;
+
+        System.out.println(beginCodeBlock);
         System.out.println(content);
-        System.out.println("```");
+        System.out.println(codeBlockMarker);
+
+        output.println(beginCodeBlock);
+        output.println(content);
+        output.println(codeBlockMarker);
         newline();
     }
 
     public static void newline() {
         System.out.println();
+        output.println();
+    }
+
+    public static void setOutput(String output) throws FileNotFoundException {
+        Display.output = new PrintStream(new File(output));
     }
 }
