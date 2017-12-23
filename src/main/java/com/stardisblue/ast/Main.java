@@ -53,7 +53,7 @@ public class Main {
 
     public Main() {
         classpaths = new ArrayList<>();
-        classpaths.add(System.getProperty("java.home") + "\\lib\\rt.jar");
+        classpaths.add(System.getProperty("java.home") + "/lib/rt.jar");
     }
 
 
