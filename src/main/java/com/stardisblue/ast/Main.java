@@ -1,5 +1,7 @@
 package com.stardisblue.ast;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import com.stardisblue.ast.info.MethodDeclarationInfo;
 import com.stardisblue.ast.info.TypeDeclarationInfo;
 import com.stardisblue.ast.structure.Cluster;
@@ -20,11 +22,55 @@ import java.util.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Main {
-    private static String projectSourcePath = System.getProperty("user.dir") + "\\src\\main\\java\\";
-    private static String jrePath = System.getProperty("java.home") + "\\lib\\rt.jar";
 
-    public static void main(String[] args) {
-        Logger.enable();
+    @Parameter(names = {"-d", "--debug"}, description = "allow the debug logs to be displayed")
+    private boolean debug = false;
+
+    @Parameter(names = {"-h", "--help"}, description = "displays the help", help = true)
+    private boolean help;
+
+    @Parameter(description = "sourcepath")
+    private String projectSourcePath = System.getProperty("user.dir") + "/src/main/java/";
+
+
+    @Parameter(names = "-rt", description = "path to rt.jar", required = true)
+    private String[] classpaths = {System.getProperty("java.home") + "\\lib\\rt.jar"};
+
+    @Parameter(names = {"-v", "--min-amount-methods"}, description = "Get classes with more than n methods", required = true)
+    private int minimalValue = 3;
+
+    @Parameter(names = {"-m", "--method-percentage"}, description = "Percentage of top classes with most method")
+    private int percentageMethods = 10;
+
+    @Parameter(names = {"-l", "--method-lines-percentage"}, description = "Percentage of top methods with most lines")
+    private int percentageMethodLines = 10;
+
+    @Parameter(names = {"-f", "--field-percentage"}, description = "Percentage of top classes with most fields")
+    private int percentageFields = 10;
+
+
+    /**
+     * Main method
+     *
+     * @param args program arguments
+     */
+    public static void main(String... args) {
+        Main main = new Main();
+        JCommander jcommander = JCommander.newBuilder().addObject(main).build();
+        jcommander.parse(args);
+        main.run(jcommander);
+    }
+
+    private void run(JCommander jcommander) {
+        if (help) { // displays the help
+            jcommander.usage();
+            return;
+        }
+
+        if (debug) { // enables debug
+            Logger.enable();
+        }
+
 
         /*
          * Setting up AST
@@ -56,7 +102,6 @@ public class Main {
         List<MethodDeclarationInfo> methods = ListUtils.extract(classes, TypeDeclarationInfo::getMethods);
 
 
-
         Display.title("Source Analyzer Statistics");
 
         /*
@@ -68,13 +113,13 @@ public class Main {
 
         Display.item("Number of classes : " + classes.size());
         Display.item("Total number of lines : " +
-                             ListUtils.sum(classes, TypeDeclarationInfo::numberOfLines));
+                ListUtils.sum(classes, TypeDeclarationInfo::numberOfLines));
         Display.item("Average number of methods/class : " +
-                             ListUtils.average(classes, TypeDeclarationInfo::numberOfMethods));
+                ListUtils.average(classes, TypeDeclarationInfo::numberOfMethods));
         Display.item("Average number of lines/method : " +
-                             ListUtils.average(methods, MethodDeclarationInfo::numberOfLines));
+                ListUtils.average(methods, MethodDeclarationInfo::numberOfLines));
         Display.item("Average number of fields/class : " +
-                             ListUtils.average(classes, TypeDeclarationInfo::numberOfFields));
+                ListUtils.average(classes, TypeDeclarationInfo::numberOfFields));
         Display.newline();
 
         /*
@@ -86,26 +131,24 @@ public class Main {
         /*
          * Percent of classes with the most methods
          */
-        int percentageMethods = 10;
         // filter
         List<TypeDeclarationInfo> mostMethods =
                 ListUtils.sortedTopSubList(classes, percentageMethods,
-                                           (o1, o2) -> o2.numberOfMethods() - o1.numberOfMethods());
+                        (o1, o2) -> o2.numberOfMethods() - o1.numberOfMethods());
         // display
         Display.withMost("Class(es)", "Method(s)", mostMethods, classes.size(), percentageMethods,
-                         t -> t.getFullName() + " : " + t.numberOfMethods() + " method(s)");
+                t -> t.getFullName() + " : " + t.numberOfMethods() + " method(s)");
 
         /*
          * Percent of classes with the most fields
          */
-        int percentageFields = 10;
         // filter
         List<TypeDeclarationInfo> mostFields =
                 ListUtils.sortedTopSubList(classes, percentageFields,
-                                           (o1, o2) -> o2.numberOfFields() - o1.numberOfFields());
+                        (o1, o2) -> o2.numberOfFields() - o1.numberOfFields());
         // display
         Display.withMost("Class(es)", "Field(s)", mostFields, classes.size(), percentageFields,
-                         t -> t.getFullName() + " : " + t.numberOfFields() + " field(s)");
+                t -> t.getFullName() + " : " + t.numberOfFields() + " field(s)");
 
 
         /*
@@ -121,32 +164,30 @@ public class Main {
         int percentageTotal = (int) Math.ceil(100 * mostMethodsFields.size() / classes.size());
         //  display (name of class)
         Display.withMost("Class(es)", "Field(s) and Method(s)", mostMethodsFields, classes.size(), percentageTotal,
-                         t -> t.getFullName() + " : " +
-                                 t.numberOfFields() + " field(s), " + t.numberOfMethods() + " method(s)");
+                t -> t.getFullName() + " : " +
+                        t.numberOfFields() + " field(s), " + t.numberOfMethods() + " method(s)");
 
 
         /*
          * Classes that have more than n methods
          */
-        int minimalValue = 3;
         // filter
         List<TypeDeclarationInfo> filteredByMethodNumber =
                 ListUtils.hasMoreThan(classes, minimalValue, TypeDeclarationInfo::numberOfMethods);
         // display
         Display.list("Class(es) with More than " + minimalValue + " Method(s)", filteredByMethodNumber,
-                     t -> t.getFullName() + " : " + t.numberOfMethods() + " method(s)");
+                t -> t.getFullName() + " : " + t.numberOfMethods() + " method(s)");
 
         /*
          * Get Methods with most Lines
          */
-        int percentageMethodLines = 10;
         // filter
         List<MethodDeclarationInfo> mostMethodLines =
                 ListUtils.sortedTopSubList(methods, percentageMethodLines,
-                                           (m1, m2) -> m2.numberOfLines() - m1.numberOfLines());
+                        (m1, m2) -> m2.numberOfLines() - m1.numberOfLines());
         // display
         Display.withMost("Method(s)", "Line(s)", mostMethodLines, methods.size(), percentageMethodLines,
-                         m -> m.getShortName() + " : " + m.numberOfLines() + " line(s)");
+                m -> m.getShortName() + " : " + m.numberOfLines() + " line(s)");
 
         /*
          * Get Method with highest number of parameters
@@ -157,10 +198,10 @@ public class Main {
         // get same as max
         List<MethodDeclarationInfo> maxParamMethods =
                 ListUtils.getSameAs(methods, maxParamMethod,
-                                    (m1, m2) -> m1.numberOfParameters() == m2.numberOfParameters());
+                        (m1, m2) -> m1.numberOfParameters() == m2.numberOfParameters());
         // display
         Display.list("Method(s) With The Highest Number of Parameter(s)", maxParamMethods,
-                     (t) -> t.getFullName() + " : " + t.numberOfParameters() + " parameters");
+                (t) -> t.getFullName() + " : " + t.numberOfParameters() + " parameters");
 
         /*
          * Class list and method
@@ -219,7 +260,6 @@ public class Main {
             partitionedLinks.addAll(Compute.dendrogramLinks(partition));
         }
         Display.json("Dendrogram Partition graph", dendrogramNodes, partitionedLinks);
-
     }
 
 
@@ -227,7 +267,7 @@ public class Main {
      * @param fileContent the content of a javafile
      * @return The apporpriate CompilationUnit
      */
-    private static CompilationUnit parse(String fileContent) {
+    private CompilationUnit parse(String fileContent) {
         ASTParser parser = ASTParser.newParser(AST.JLS9);
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
         parser.setResolveBindings(true); // we need bindings later on
@@ -238,9 +278,8 @@ public class Main {
         parser.setUnitName("stardisblue");
 
         String[] sources = {projectSourcePath};
-        String[] classpath = {jrePath};
 
-        parser.setEnvironment(classpath, sources, new String[]{"UTF-8"}, true);
+        parser.setEnvironment(classpaths, sources, new String[]{"UTF-8"}, true);
         parser.setSource(fileContent.toCharArray()); // set source
         return (CompilationUnit) parser.createAST(null /* IProgressMonitor */); // parse
     }
