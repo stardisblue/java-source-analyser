@@ -289,6 +289,8 @@ public class Main {
         Display.blockquote("written in `dendogram-partition.json`");
         // write
         Write.json("dendogram-partition.json", dendrogramNodes, partitionedLinks);
+
+        Display.close();
     }
 
     /**
