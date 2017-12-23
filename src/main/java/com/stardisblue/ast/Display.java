@@ -145,4 +145,8 @@ public class Display {
     public static void setOutput(String output) throws FileNotFoundException {
         Display.output = new PrintStream(new File(output));
     }
+
+    public static void close() {
+        output.close();
+    }
 }
