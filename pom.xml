@@ -6,7 +6,7 @@
 
     <groupId>stardisblue</groupId>
     <artifactId>java-source-analyzer</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <properties>
         <java.src.version>1.8</java.src.version>
         <java.test.version>1.8</java.test.version>
